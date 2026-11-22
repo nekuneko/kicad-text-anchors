@@ -17,3 +17,17 @@ A lightweight KiCad PCB Editor plugin that toggles anchor crosses on the `User.C
 
 ## License
 Distributed under the MIT License. See `LICENSE` for details.
+
+## ☕ Support this project
+
+If **Text Anchors Overlay** saves you time, consider buying me a coffee!
+Your support helps me maintain and improve this free plugin.
+
+<p align="center">
+  <a href="https://ko-fi.com/nekuneko">
+    <img
+      src="https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white"
+      alt="Support me on Ko-fi"
+    >
+  </a>
+</p>
