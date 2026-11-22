@@ -24,6 +24,17 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
             self._start()
 
     def _start(self):
+        board = pcbnew.GetBoard()
+        if not board:
+            return
+
+        # Make User.Comments visible if it is currently hidden
+        visible_layers = board.GetVisibleLayers()
+        if not visible_layers.Contains(LAYER):
+            visible_layers.AddLayer(LAYER)
+            board.SetVisibleLayers(visible_layers)
+            pcbnew.UpdateUserInterface()
+
         self._active = True
         self._last_positions = None
         self._update_crosses()
@@ -36,6 +47,7 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
         if self._timer is not None:
             self._timer.Stop()
             self._timer = None
+
         board = pcbnew.GetBoard()
         if board:
             self._clear_crosses(board)
