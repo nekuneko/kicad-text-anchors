@@ -10,7 +10,7 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
     def defaults(self):
         self.name = "Toggle Text Anchors"
         self.category = "Modify PCB"
-        self.description = "Show or hide real-time anchor crosses for all visible PCB texts"
+        self.description = "Show or hide real-time anchor crosses for texts on visible layers"
         self.show_toolbar_button = True
         self.icon_file_name = os.path.join(os.path.dirname(__file__), "icon.png")
         self._timer = None
@@ -54,21 +54,25 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
             if item.GetLayer() == LAYER and isinstance(item, pcbnew.PCB_SHAPE):
                 board.Remove(item)
 
+    def _is_item_shown(self, item, visible_layers):
+        return item.IsVisible() and visible_layers.Contains(item.GetLayer())
+
     def _get_text_positions(self, board):
         positions = []
+        visible_layers = board.GetVisibleLayers()
 
         for item in board.GetDrawings():
-            if isinstance(item, pcbnew.PCB_TEXT) and item.IsVisible():
+            if isinstance(item, pcbnew.PCB_TEXT) and self._is_item_shown(item, visible_layers):
                 pos = item.GetPosition()
                 positions.append((pos.x, pos.y))
 
         for fp in board.GetFootprints():
             for item in fp.GraphicalItems():
-                if isinstance(item, (pcbnew.PCB_TEXT, pcbnew.PCB_FIELD)) and item.IsVisible():
+                if isinstance(item, (pcbnew.PCB_TEXT, pcbnew.PCB_FIELD)) and self._is_item_shown(item, visible_layers):
                     pos = item.GetPosition()
                     positions.append((pos.x, pos.y))
             for field in (fp.Reference(), fp.Value()):
-                if field.IsVisible():
+                if self._is_item_shown(field, visible_layers):
                     pos = field.GetPosition()
                     positions.append((pos.x, pos.y))
 
