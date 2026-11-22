@@ -1,0 +1,33 @@
+{
+  "$schema": "https://go.kicad.org/pcm/schemas/v2",
+  "name": "Text Anchors Overlay",
+  "description": "Toggle permanent real-time crosses at text anchor points on any board layer",
+  "description_full": "Displays real-time anchor crosses on the User.Comments layer for all visible text items and footprint fields across any PCB layer, making text alignment and grid snapping effortless.",
+  "identifier": "com.nekuneko.text-anchors",
+  "type": "plugin",
+  "author": {
+    "name": "nekuneko",
+    "contact": {
+      "web": "https://github.com/nekuneko"
+    }
+  },
+  "license": "MIT",
+  "resources": {
+    "homepage": "https://github.com/nekuneko/kicad-text-anchors"
+  },
+  "tags": [
+    "text",
+    "anchors",
+    "alignment",
+    "silkscreen",
+    "overlay"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "status": "stable",
+      "kicad_version": "10.0",
+      "runtime": "swig"
+    }
+  ]
+}
