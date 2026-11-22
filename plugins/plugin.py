@@ -4,6 +4,7 @@ import pcbnew
 
 SIZE = pcbnew.FromMM(0.4)
 LAYER = pcbnew.Cmts_User
+CROSS_WIDTH = pcbnew.FromMM(0.05)
 
 
 class TextAnchorsPlugin(pcbnew.ActionPlugin):
@@ -15,6 +16,7 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
         self.icon_file_name = os.path.join(os.path.dirname(__file__), "icon.png")
         self._timer = None
         self._last_positions = None
+        self._pending_positions = None
         self._active = False
 
     def Run(self):
@@ -37,10 +39,11 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
 
         self._active = True
         self._last_positions = None
-        self._update_crosses()
+        self._pending_positions = None
+        self._update_crosses(force=True)
         self._timer = wx.Timer()
         self._timer.Bind(wx.EVT_TIMER, self._on_timer)
-        self._timer.Start(500)
+        self._timer.Start(300)
 
     def _stop(self):
         self._active = False
@@ -53,18 +56,31 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
             self._clear_crosses(board)
             pcbnew.Refresh()
 
+        self._last_positions = None
+        self._pending_positions = None
+
     def _on_timer(self, event):
         if not self._active:
             return
         try:
-            self._update_crosses()
+            self._update_crosses(force=False)
         except Exception:
             pass
 
     def _clear_crosses(self, board):
+        expected_len = SIZE * 2
         for item in list(board.GetDrawings()):
-            if item.GetLayer() == LAYER and isinstance(item, pcbnew.PCB_SHAPE):
-                board.Remove(item)
+            if (
+                isinstance(item, pcbnew.PCB_SHAPE)
+                and item.GetLayer() == LAYER
+                and item.GetShape() == pcbnew.SHAPE_T_SEGMENT
+            ):
+                start = item.GetStart()
+                end = item.GetEnd()
+                dx = abs(end.x - start.x)
+                dy = abs(end.y - start.y)
+                if (dx == expected_len and dy == 0) or (dy == expected_len and dx == 0):
+                    board.Remove(item)
 
     def _is_item_shown(self, item, visible_layers):
         return item.IsVisible() and visible_layers.Contains(item.GetLayer())
@@ -90,13 +106,19 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
 
         return sorted(positions)
 
-    def _update_crosses(self):
+    def _update_crosses(self, force=False):
         board = pcbnew.GetBoard()
         if not board:
             return
         current_positions = self._get_text_positions(board)
-        if current_positions == self._last_positions:
-            return
+
+        if not force:
+            # Wait for movement to settle across two ticks before redrawing
+            if current_positions != self._pending_positions:
+                self._pending_positions = current_positions
+                return
+            if current_positions == self._last_positions:
+                return
 
         self._clear_crosses(board)
         for x, y in current_positions:
@@ -104,10 +126,11 @@ class TextAnchorsPlugin(pcbnew.ActionPlugin):
                 seg = pcbnew.PCB_SHAPE(board)
                 seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
                 seg.SetLayer(LAYER)
-                seg.SetWidth(pcbnew.FromMM(0.05))
+                seg.SetWidth(CROSS_WIDTH)
                 seg.SetStart(pcbnew.VECTOR2I(x + dx, y + dy))
                 seg.SetEnd(pcbnew.VECTOR2I(x - dx, y - dy))
                 board.Add(seg)
 
         self._last_positions = current_positions
+        self._pending_positions = current_positions
         pcbnew.Refresh()
